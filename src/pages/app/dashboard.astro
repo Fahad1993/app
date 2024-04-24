@@ -1,11 +1,10 @@
 ---
-import PocketBase from "pocketbase";
+import { getProjects } from '@data/pocketbase'
 import LayoutApp from "@layouts/LayoutApp.astro";
 import ProjectCard from "@components/app/projects/ProjectCard.astro";
+import AddNewProjectCard from '@components/app/projects/AddNewProjectCard.astro'
 
-const pb = new PocketBase("http://127.0.0.1:8090");
-
-const projects = await pb.collection("projects").getFullList();
+const projects = await getProjects()
 
 console.log(projects);
 ---
@@ -16,7 +15,7 @@ console.log(projects);
           class='rounded-lg bg-zinc-900 px-5 py-4 sm:py-2.5 text-xl sm:text-3xl md:text-5xl text-white uppercase text-center font-extrabold'>
           Projects
         </div>
- 
+        <div class='space-y-6'>
         <ul class='grid gap-6 sm:grid-cols-2'>
           {
             projects.map(project => (
@@ -24,6 +23,8 @@ console.log(projects);
             ))
           }
         </ul>
+        <AddNewProjectCard />
+    </div>
     </div>
   </LayoutApp>
   

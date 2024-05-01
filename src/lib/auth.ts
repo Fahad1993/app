@@ -1,4 +1,21 @@
 import { pb } from '@src/data/pocketbase'
+import type { UsersResponse } from '@src/data/pocketbase-types'
+
+export async function getUserObjectFromDb(user_id: string) {
+    const user: UsersResponse = await pb.collection('users').getOne(user_id)
+    return user
+  }
+
+  export async function isUserVerified() {
+    //we load from db as user object is not updated immediately if user clicks verify email
+    const user = await getUserObjectFromDb(getCurrentUserId())
+    return user.verified
+  }
+
+  //utility function to get current user id
+export function getCurrentUserId() {
+    return pb.authStore.model?.id
+  }
 
 export const isValidEmail = (email: string) => {
     if (typeof email !== 'string') return false
@@ -100,3 +117,41 @@ export const isValidEmail = (email: string) => {
   export async function sendResetPasswordLink(email: string) {
     await pb.collection('users').requestPasswordReset(email)
   }
+
+  export function getCurrentUserEmail() {
+    return pb.authStore.model?.email
+  }
+
+  export async function sendVerificationEmail(email: string) {
+    await pb
+      .collection('users')
+      .requestVerification(email)
+  }
+
+  export async function processTurnstile(
+    cf_turnstile_response: string
+  ) {
+    const url =
+      'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+  
+    const requestBody = new URLSearchParams({
+      secret:
+        import.meta.env.TURNSTILE_SITE_SECRET ||
+        process.env.TURNSTILE_SITE_SECRET,
+      response: cf_turnstile_response
+    })
+  
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: requestBody.toString()
+    })
+  
+    const data = await response.json()
+  
+    return data.success
+  }
+
+    

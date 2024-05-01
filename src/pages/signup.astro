@@ -7,6 +7,8 @@ import {
   loginUser,
   setCookieAndRedirectToDashboard,
   isLoggedIn,
+  sendVerificationEmail,
+  processTurnstile,
 } from '@lib/auth'
 
 if (await isLoggedIn(Astro.request)) {
@@ -23,6 +25,15 @@ if (Astro.request.method === 'POST') {
   const password_confirm =
     formData.get('password_confirm') as string
 
+    const is_valid_turnstile = await processTurnstile(
+    formData.get('cf-turnstile-response')?.toString() || ''
+  )
+
+  if (!is_valid_turnstile) {
+    error = 'Request not authorized'
+  } else {
+
+
     if (password !== password_confirm) {
     error = 'Passwords do not match'
     } else {
@@ -32,18 +43,28 @@ if (Astro.request.method === 'POST') {
       try {
         await createUser(email, password)
         await loginUser(email, password)
+        await sendVerificationEmail(email)
+
         return setCookieAndRedirectToDashboard()
       } catch (e) {
         error = 'Could not create user'
       }
     } 
   }
+}
 
 }
 
 ---
 
 <LayoutSite title='SECRETPLAN'>
+
+    <script
+    is:inline
+    src='https://challenges.cloudflare.com/turnstile/v0/api.js'
+    defer
+    async></script>
+
   <div class='w-full max-w-md mx-auto'>
     <a href='/'>
       <img
@@ -94,6 +115,14 @@ if (Astro.request.method === 'POST') {
             class='w-2/3 p-1 text-black border self-baseline'
           />
         </p>
+
+        <div
+        class='cf-turnstile mt-6 flex justify-center'
+        data-sitekey={import.meta.env
+          .TURNSTILE_SITE_KEY ||
+          process.env.TURNSTILE_SITE_KEY}>
+      </div>
+      
         <input
           type='submit'
           class='block w-full px-3 py-2 mt-8 text-sm font-semibold leading-6 text-center text-white rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ring-1 ring-inset ring-blue-200 hover:ring-blue-300 hover:bg-blue-600'

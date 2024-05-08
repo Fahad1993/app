@@ -117,7 +117,12 @@ export async function processTurnstile(cf_turnstile_response: string) {
     response: cf_turnstile_response,
   })
 
-  const response = await fetch(url, {
+  // Check if the required response parameter is provided
+if (!cf_turnstile_response) {
+    throw new Error('The response parameter is missing.');
+  }
+  
+  try { const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -125,9 +130,13 @@ export async function processTurnstile(cf_turnstile_response: string) {
     body: requestBody.toString(),
   })
 
-  console.log("requestBody.toString(): ", requestBody.toString())
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+//   console.log("requestBody.toString(): ", requestBody.toString())
   const data = await response.json()
   
   console.log("data: ", data)
   return data.success
-}
+} catch (error) { console.error('Error processing the turnstile response:', error); return false; } }

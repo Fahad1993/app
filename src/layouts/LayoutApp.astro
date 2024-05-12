@@ -42,6 +42,8 @@ import '@fontsource/m-plus-rounded-1c/800.css'
             Alpine: any
           }
         }
+
+        htmx.config.selfRequestsOnly = true
   
         window.htmx = htmx //optional
         window.Alpine = Alpine //optional
@@ -68,6 +70,12 @@ import '@fontsource/m-plus-rounded-1c/800.css'
           }
         }
       )
+      document.addEventListener(
+      'htmx:sendError',
+      function (event) {
+        alert('A connection error occurred')
+      }
+    )
     })
   
     function dragAndDropIntoTask() {
